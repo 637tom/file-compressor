@@ -2,11 +2,16 @@
 #include <set>
 #include <utility>
 #include <vector>
+#include <cstdint>
 
 struct Node {
     Node* left;
     Node* right;
-    int symbol;
+    unsigned char symbol;
+};
+struct Code {
+    unsigned int val;
+    int len;
 };
 
 class Huffman {
@@ -15,7 +20,15 @@ class Huffman {
         set <pair<int, Node*>> s;
         std::vector<unsigned char> text;
         int freq[256];
+        Code codes[256];
 
+        void add(int freq, int symbol, Node* left = nullptr, Node* right = nullptr) {
+            Node* curr = new Node();
+            curr->symbol = symbol;
+            curr->left = left;
+            curr->right = right;
+            s.insert({freq, curr});
+        }
         void remTree(Node* curr) {
             if(curr == nullptr) return;
             remTree(curr->left);
@@ -33,13 +46,64 @@ class Huffman {
         ~Huffman() {
             remTree(root);
         }
+
         void cntFreq() {
             for(auto ch : text) {
                 freq[ch]++;
             }
         }
         void buildTree() {
+            for(int i = 0; i < 256; i++) {
+                if(freq[i] > 0) {
+                    add(freq[i], i);
+                }
+            }
+            while(s.size() > 1) {
+                auto it1 = s.begin();
+                auto it2 = next(it1);
+                s.erase(it1);
+                s.erase(it2);
+                add(it1->first + it2->first, 0, it1->second, it2->second);
+            }
+            root = s.begin()->second;
         }
+        void create_codes(Node* curr, int len, unsigned int val) {
+            if(curr == nullptr) return;
+            if(curr->left == nullptr && curr->right == nullptr) {
+                codes[curr->symbol].val = val;
+                codes[curr->symbol].len = len;
+                return;
+            }
+            create_codes(curr->left, len + 1, val);
+            create_codes(curr->right, len + 1, (val ^ (1 << len)));
+        }
+        
+        vector<uint8_t> compress() {
+            vector<uint8_t> res;
+            int il = 0;
+            for(int i = 0; i < 256; i++) {
+                if(freq[i] > 0) {
+                    il++;
+                }
+            }
+            uint8_t* bytes_il = (uint8_t*)&il;
+            for(int j = 0; j < 4; j++) {
+                res.push_back(bytes_il[j]);
+            }
+            for(int i = 0; i < 256; i++) {
+                if(freq[i] > 0) {
+                    res.push_back((uint8_t)i);
+                    res.push_back((uint8_t)codes[i].len);
+                    uint8_t* bytes_= (uint8_t*)&codes[i].val;
+                    for(int j = 0; j < 4; j++) {
+                        res.push_back(bytes_freq[j]);
+                    }
+                }
+            }
+
+            
+        }
+
 };
 
 int main() {
