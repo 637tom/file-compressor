@@ -80,28 +80,36 @@ class Huffman {
         
         vector<uint8_t> compress() {
             vector<uint8_t> res;
-            int il = 0;
+            int tot_len = text.size();
+            uint8_t* bytes_tot_len = (uint8_t*)&tot_len;
+            for(int i = 0; i < 4; i++) {
+                res.push_back(bytes_tot_len[i]);
+            }
             for(int i = 0; i < 256; i++) {
-                if(freq[i] > 0) {
-                    il++;
+                uint8_t* bytes_freq = (uint8_t*)&freq[i];
+                for(int j = 0; j < 4; j++) {
+                    res.push_back(bytes_freq[j]);
                 }
             }
-            uint8_t* bytes_il = (uint8_t*)&il;
-            for(int j = 0; j < 4; j++) {
-                res.push_back(bytes_il[j]);
-            }
-            for(int i = 0; i < 256; i++) {
-                if(freq[i] > 0) {
-                    res.push_back((uint8_t)i);
-                    res.push_back((uint8_t)codes[i].len);
-                    uint8_t* bytes_= (uint8_t*)&codes[i].val;
-                    for(int j = 0; j < 4; j++) {
-                        res.push_back(bytes_freq[j]);
+            uint8_t buff= 0;
+            int bit_cnt = 0;
+            for(auto ch : text) {
+                for(int i = codes[ch].len - 1; i >= 0; i--) {
+                    buff <<= 1;
+                    if((1<<i) & codes[ch].val) {
+                        buff ^= 1;
+                    }
+                    bit_cnt++;
+                    if(bit_cnt == 8) {
+                        res.push_back(buff);
+                        buff = 0;
+                        bit_cnt = 0;
                     }
                 }
             }
-
-            
+            buff <<= (8 - bit_cnt);
+            res.push_back(buff);
+            return res;   
         }
 
 };
