@@ -6,7 +6,7 @@ class HuffmanEncoder {
     private:
         Node* root;
         std::set <std::pair<int, Node*>> s;
-        std::vector<unsigned char> text;
+        std::vector<uint8_t> text;
         int freq[256];
         Code codes[256];
 
@@ -16,7 +16,7 @@ class HuffmanEncoder {
         void buildTree();
         void create_codes(Node* curr, int len, unsigned int val);
     public:
-        HuffmanEncoder(std::vector<unsigned char> inp);
+        HuffmanEncoder(std::vector<uint8_t> inp);
         ~HuffmanEncoder();
         std::vector<uint8_t> compress();
 
