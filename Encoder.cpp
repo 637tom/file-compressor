@@ -4,7 +4,7 @@
 #include <cstdint>
 #include "Encoder.h"
 
-void HuffmanEncoder::add(int freq, int symbol, Node* left = nullptr, Node* right = nullptr) {
+void HuffmanEncoder::add(int freq, int symbol, Node* left, Node* right) {
     Node* curr = new Node();
     curr->symbol = symbol;
     curr->left = left;
@@ -68,7 +68,7 @@ std::vector<uint8_t> HuffmanEncoder::compress() {
     cntFreq();
     buildTree();
     create_codes(root, 0, 0);
-    
+
     std::vector<uint8_t> res;
     int tot_len = text.size();
     uint8_t* bytes_tot_len = (uint8_t*)&tot_len;

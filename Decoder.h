@@ -2,6 +2,7 @@
 #include "Huffman.h"
 #include <vector>
 #include <cstdint>
+#include <set>
 
 class HuffmanDecoder {
     private:

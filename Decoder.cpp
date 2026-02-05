@@ -3,8 +3,9 @@
 #include <utility>
 #include <vector>
 #include <cstdint>
+#include "Decoder.h"
 
-void HuffmanDecoder::add(int freq, int symbol, Node* left = nullptr, Node* right = nullptr) {
+void HuffmanDecoder::add(int freq, int symbol, Node* left, Node* right) {
     Node* curr = new Node();
     curr->symbol = symbol;
     curr->left = left;
@@ -52,7 +53,7 @@ void HuffmanDecoder::readData() {
 HuffmanDecoder::HuffmanDecoder(std::vector<uint8_t> inp) {
     compressed = inp;
     root = nullptr;
-    tot_len = 0
+    tot_len = 0;
     for(int i = 0; i < 256; i++) {
         freq[i] = 0;
     }
@@ -65,5 +66,25 @@ HuffmanDecoder::~HuffmanDecoder() {
 std::vector<uint8_t> HuffmanDecoder::decompress() {
     readData();
     buildTree();
-    
+    std::vector<uint8_t> res;
+    Node* curr = root;
+    int rem = 0;
+    for(int i = 4 + 256 * 4; i < compressed.size(); i++) {
+        for(int j = 7; j >= 0; j--) {
+            if(compressed[i] & (1<<j)) {
+                curr = curr->right;
+            }else {
+                curr = curr->left;
+            }
+            if(curr->left == nullptr && curr->right == nullptr) {
+                res.push_back(curr->symbol);
+                curr = root;
+                rem++;
+                if(rem == tot_len) {
+                    return res;
+                }
+            }
+        }
+    }
+    return res;
 }

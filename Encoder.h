@@ -1,6 +1,7 @@
 #pragma once
 #include "Huffman.h"
 #include <vector>
+#include <set>
 
 class HuffmanEncoder {
     private:
