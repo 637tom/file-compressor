@@ -4,7 +4,7 @@
 #include <cstdint>
 #include "Encoder.h"
 
-void HuffmanEncoder::add(int freq, int symbol, Node* left, Node* right) {
+void HuffmanEncoder::add(unsigned int freq, uint8_t symbol, Node* left, Node* right) {
     Node* curr = new Node();
     curr->symbol = symbol;
     curr->left = left;
@@ -53,7 +53,7 @@ void HuffmanEncoder::buildTree() {
     root = s.begin()->second;
 }
 
-void HuffmanEncoder::create_codes(Node* curr, int len, unsigned int val) {
+void HuffmanEncoder::create_codes(Node* curr, unsigned int len, unsigned int val) {
     if(curr == nullptr) return;
     if(curr->left == nullptr && curr->right == nullptr) {
         codes[curr->symbol].val = val;

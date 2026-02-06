@@ -5,7 +5,7 @@
 #include <cstdint>
 #include "Decoder.h"
 
-void HuffmanDecoder::add(int freq, int symbol, Node* left, Node* right) {
+void HuffmanDecoder::add(unsigned int freq, uint8_t symbol, Node* left, Node* right) {
     Node* curr = new Node();
     curr->symbol = symbol;
     curr->left = left;

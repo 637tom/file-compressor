@@ -1,12 +1,13 @@
 #pragma once
+#include <cstdint>
 
 struct Node {
     Node* left;
     Node* right;
-    unsigned char symbol;
+    uint8_t symbol;
 };
 
 struct Code {
     unsigned int val;
-    int len;
+    unsigned int len;
 };

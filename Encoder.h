@@ -6,16 +6,16 @@
 class HuffmanEncoder {
     private:
         Node* root;
-        std::set <std::pair<int, Node*>> s;
+        std::set <std::pair<unsigned int, Node*>> s;
         std::vector<uint8_t> text;
-        int freq[256];
+        unsigned int freq[256];
         Code codes[256];
 
-        void add(int freq, int symbol, Node* left = nullptr, Node* right = nullptr);
+        void add(unsigned int freq, uint8_t symbol, Node* left = nullptr, Node* right = nullptr);
         void remTree(Node* curr);
         void cntFreq();
         void buildTree();
-        void create_codes(Node* curr, int len, unsigned int val);
+        void create_codes(Node* curr, unsigned int len, unsigned int val);
     public:
         HuffmanEncoder(std::vector<uint8_t> inp);
         ~HuffmanEncoder();
