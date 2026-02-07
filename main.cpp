@@ -8,6 +8,7 @@
 #include <filesystem>
 
 namespace fs = std::filesystem;
+
 std::vector<uint8_t> read_file(fs::path& file_path) {
     std::ifstream file(file_path, std::ios::binary | std::ios::ate);
     if (!file) {
@@ -27,6 +28,7 @@ std::vector<uint8_t> pack_file(fs::path& file_path, fs::path& cut_file_path) {
     HuffmanEncoder encoder(data);
     std::vector<uint8_t> compressed = encoder.compress();
     std::reverse(compressed.begin(), compressed.end());
+
     unsigned int comp_size = compressed.size();
     uint8_t* comp_size_bytes = (uint8_t*)&comp_size;
     std::vector<uint8_t> res = compressed;
@@ -37,6 +39,7 @@ std::vector<uint8_t> pack_file(fs::path& file_path, fs::path& cut_file_path) {
     for(int i = cut_file_path_str.size() - 1; i >= 0; i--) {
         res.push_back(cut_file_path_str[i]);
     }
+
     unsigned int l = cut_file_path_str.size();
     uint8_t* l_bytes = (uint8_t*)&l;
     for(int i = 3; i >= 0; i--) {
@@ -58,8 +61,9 @@ std::vector<uint8_t> pack_folder(const fs::path& folder_path) {
     for(int i = 0; i < folder_name_size; i++) {
         res.push_back(folder_name[i]);
     }
-    for(auto& file : fs::directory_iterator(folder_path)) {
-        if(file.is_regular_file()) {
+
+    for(auto& file : fs::recursive_directory_iterator(folder_path)) {
+        if(fs::is_regular_file(file)) {
             fs::path file_path = file.path();
             fs::path cut_file_path = file.path();
             cut_file_path = cut_file_path.lexically_relative(parent_path);
@@ -87,7 +91,7 @@ void unpack_file(const fs::path& file_path, const fs::path& destination_path) {
         folder_name += data[wsk++];
     }
     fs::path folder_path = destination_path / folder_name;
-    if(folder_path.exists()) {
+    if(fs::exists(folder_path)) {
         std::cout << "Folder already exists\n";
         return;
     }
@@ -105,13 +109,27 @@ void unpack_file(const fs::path& file_path, const fs::path& destination_path) {
         }
         fs::path curr_file_path = curr_file_path_str;
         fs::path curr_destination_path = destination_path / curr_file_path; 
-        if(!curr_destination_path.exists()) {
-            fs::create_directories(curr_destination_path);
+        fs::path curr_parent = curr_destination_path.parent_path();
+        if(!fs::exists(curr_parent)) {
+            fs::create_directories(curr_parent);
         }
-        
-        
+        unsigned int curr_file_size = 0;
+        uint8_t* curr_file_size_bytes = (uint8_t*)&curr_file_size;
+        for(int i = 0; i < 4; i++) {
+            curr_file_size_bytes[i] = data[wsk++];
+        }
+        std::vector<uint8_t> curr_file_data(curr_file_size);
+        for(int i = 0; i < curr_file_size; i++) {
+            curr_file_data[i] = data[wsk++];
+        }
+        HuffmanDecoder decoder(curr_file_data);
+        std::vector<uint8_t> decompressed = decoder.decompress();
+        std::ofstream file(curr_destination_path, std::ios::binary);
+        file.write((char*)decompressed.data(), decompressed.size());
+        file.close();
     }
 }
+
 int main() {
     std::string testString = "ABR";
     while(testString.size() < 10000) {
