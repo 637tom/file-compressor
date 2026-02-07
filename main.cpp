@@ -8,8 +8,7 @@
 #include <filesystem>
 
 namespace fs = std::filesystem;
-
-std::vector<uint8_t> pack_file(fs::path& file_path, fs::path& cut_file_path) {
+std::vector<uint8_t> read_file(fs::path& file_path) {
     std::ifstream file(file_path, std::ios::binary | std::ios::ate);
     if (!file) {
         std::cout << "Unable to open file" << file_path << "\n";
@@ -20,6 +19,11 @@ std::vector<uint8_t> pack_file(fs::path& file_path, fs::path& cut_file_path) {
     std::vector<uint8_t> data(size);
     file.read((char*)data.data(), size);
     file.close();
+    return data;
+}
+
+std::vector<uint8_t> pack_file(fs::path& file_path, fs::path& cut_file_path) {
+    std::vector<uint8_t> data = read_file(file_path);
     HuffmanEncoder encoder(data);
     std::vector<uint8_t> compressed = encoder.compress();
     std::reverse(compressed.begin(), compressed.end());
@@ -43,17 +47,70 @@ std::vector<uint8_t> pack_file(fs::path& file_path, fs::path& cut_file_path) {
 }
 
 std::vector<uint8_t> pack_folder(const fs::path& folder_path) {
+    fs::path parent_path = folder_path.parent_path();
     std::vector<uint8_t> res;
+    std::string folder_name = folder_path.filename().string();
+    unsigned int folder_name_size = folder_name.size();
+    uint8_t* folder_name_size_bytes = (uint8_t*)&folder_name_size;
+    for(int i = 0; i < 4; i++) {
+        res.push_back(folder_name_size_bytes[i]);
+    }
+    for(int i = 0; i < folder_name_size; i++) {
+        res.push_back(folder_name[i]);
+    }
     for(auto& file : fs::directory_iterator(folder_path)) {
         if(file.is_regular_file()) {
             fs::path file_path = file.path();
             fs::path cut_file_path = file.path();
-            cut_file_path = cut_file_path.lexically_relative(folder_path);
+            cut_file_path = cut_file_path.lexically_relative(parent_path);
             std::vector<uint8_t> curr = pack_file(file_path, cut_file_path);
             res.insert(res.end(), curr.begin(), curr.end());
         }
     }
     return res;
+}
+
+void unpack_file(const fs::path& file_path, const fs::path& destination_path) {
+    std::vector<uint8_t> data = read_file(file_path);
+    if(data.size() == 0) {
+        std::cout << "Empty file\n";
+        return;
+    }
+    int wsk = 0;
+    unsigned int folder_name_size = 0;
+    uint8_t* folder_name_size_bytes = (uint8_t*)&folder_name_size;
+    for(int i = 0; i < 4; i++) {
+        folder_name_size_bytes[i] = data[wsk++];
+    }
+    std::string folder_name = "";
+    for(int i = 0; i < folder_name_size; i++) {
+        folder_name += data[wsk++];
+    }
+    fs::path folder_path = destination_path / folder_name;
+    if(folder_path.exists()) {
+        std::cout << "Folder already exists\n";
+        return;
+    }
+    fs::create_directories(folder_path);
+
+    while(wsk < data.size()) {
+        unsigned int curr_file_path_size = 0;
+        uint8_t* curr_file_path_size_bytes = (uint8_t*)&curr_file_path_size;
+        for(int i = 0; i < 4; i++) {
+            curr_file_path_size_bytes[i] = data[wsk++];
+        }
+        std::string curr_file_path_str = "";
+        for(int i = 0; i < curr_file_path_size; i++) {
+            curr_file_path_str += data[wsk++];
+        }
+        fs::path curr_file_path = curr_file_path_str;
+        fs::path curr_destination_path = destination_path / curr_file_path; 
+        if(!curr_destination_path.exists()) {
+            fs::create_directories(curr_destination_path);
+        }
+        
+        
+    }
 }
 int main() {
     std::string testString = "ABR";
