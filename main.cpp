@@ -141,7 +141,7 @@ int main() {
     if(choice == 1) {
         std::cout << "Enter folder path: ";
         std::string folder_to_pack_str;
-        std::cin >> folder_to_pack_str;
+        std::getline(std::cin >> std::ws, folder_to_pack_str);
         fs::path folder_to_pack = folder_to_pack_str;
         if(!fs::exists(folder_to_pack) || !fs::is_directory(folder_to_pack)) {
             std::cout << "Folder does not exist or is not a directory\n";
@@ -149,7 +149,7 @@ int main() {
         }
         std::cout << "Enter destination path: ";
         std::string destination_path_str;
-        std::cin >> destination_path_str;
+        std::getline(std::cin >> std::ws, destination_path_str);
         fs::path destination_path = destination_path_str;
         fs::path packed_file_path = destination_path / (folder_to_pack.filename().string() + ".tp");
         if(fs::exists(packed_file_path)) {
@@ -163,7 +163,7 @@ int main() {
     }else if(choice == 2) {
         std::cout << "Enter packed file path: ";
         std::string packed_file_path_str;
-        std::cin >> packed_file_path_str;
+        std::getline(std::cin >> std::ws, packed_file_path_str);
         fs::path packed_file_path = packed_file_path_str;
         if(!fs::exists(packed_file_path) || !fs::is_regular_file(packed_file_path) || packed_file_path.extension() != ".tp") {
             std::cout << "Packed file does not exist or it's wrong type of file\n";
@@ -171,8 +171,12 @@ int main() {
         }
         std::cout << "Enter destination path: ";
         std::string destination_path_str;
-        std::cin >> destination_path_str;
+        std::getline(std::cin >> std::ws, destination_path_str);
         fs::path destination_path = destination_path_str;
+        if(!fs::exists(destination_path)) {
+            std::cout << "Destination does not exist\n";
+            return 0;
+        }
         unpack_folder(packed_file_path, destination_path);
     }else {
         std::cout << "Invalid choice\n";

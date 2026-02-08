@@ -26,6 +26,13 @@ void HuffmanDecoder::buildTree() {
             add(freq[i], i);
         }
     }
+    if(s.size() == 0) {
+        root = nullptr;
+        return;
+    }
+    if(s.size() == 1){
+        add(0,0);
+    }
     while(s.size() > 1) {
         auto it1 = s.begin();
         auto it2 = std::next(it1);
