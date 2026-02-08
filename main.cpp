@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-std::vector<uint8_t> read_file(fs::path& file_path) {
+std::vector<uint8_t> read_file(const fs::path& file_path) {
     std::ifstream file(file_path, std::ios::binary | std::ios::ate);
     if (!file) {
         std::cout << "Unable to open file" << file_path << "\n";
@@ -23,7 +23,7 @@ std::vector<uint8_t> read_file(fs::path& file_path) {
     return data;
 }
 
-std::vector<uint8_t> pack_file(fs::path& file_path, fs::path& cut_file_path) {
+std::vector<uint8_t> pack_file(const fs::path& file_path, const fs::path& cut_file_path) {
     std::vector<uint8_t> data = read_file(file_path);
     HuffmanEncoder encoder(data);
     std::vector<uint8_t> compressed = encoder.compress();
@@ -50,6 +50,10 @@ std::vector<uint8_t> pack_file(fs::path& file_path, fs::path& cut_file_path) {
 }
 
 std::vector<uint8_t> pack_folder(const fs::path& folder_path) {
+    if(!fs::exists(folder_path) || !fs::is_directory(folder_path)) {
+        std::cout << "Folder does not exist or is not a directory\n";
+        return {};
+    }
     fs::path parent_path = folder_path.parent_path();
     std::vector<uint8_t> res;
     std::string folder_name = folder_path.filename().string();
@@ -74,7 +78,7 @@ std::vector<uint8_t> pack_folder(const fs::path& folder_path) {
     return res;
 }
 
-void unpack_file(const fs::path& file_path, const fs::path& destination_path) {
+void unpack_folder(const fs::path& file_path, const fs::path& destination_path) {
     std::vector<uint8_t> data = read_file(file_path);
     if(data.size() == 0) {
         std::cout << "Empty file\n";
@@ -131,27 +135,46 @@ void unpack_file(const fs::path& file_path, const fs::path& destination_path) {
 }
 
 int main() {
-    std::string testString = "ABR";
-    while(testString.size() < 10000) {
-        testString += testString;
+    std::cout << "Type 1 to pack folder, 2 to unpack folder\n";
+    int choice;
+    std::cin >> choice;
+    if(choice == 1) {
+        std::cout << "Enter folder path: ";
+        std::string folder_to_pack_str;
+        std::cin >> folder_to_pack_str;
+        fs::path folder_to_pack = folder_to_pack_str;
+        if(!fs::exists(folder_to_pack) || !fs::is_directory(folder_to_pack)) {
+            std::cout << "Folder does not exist or is not a directory\n";
+            return 0;
+        }
+        std::cout << "Enter destination path: ";
+        std::string destination_path_str;
+        std::cin >> destination_path_str;
+        fs::path destination_path = destination_path_str;
+        fs::path packed_file_path = destination_path / (folder_to_pack.filename().string() + ".tp");
+        if(fs::exists(packed_file_path)) {
+            std::cout <<"File " << packed_file_path.string() << "already exists\n";
+            return 0;
+        }
+        std::vector<uint8_t> packed = pack_folder(folder_to_pack);
+        std::ofstream file(packed_file_path, std::ios::binary);
+        file.write((char*)packed.data(), packed.size());
+        file.close();
+    }else if(choice == 2) {
+        std::cout << "Enter packed file path: ";
+        std::string packed_file_path_str;
+        std::cin >> packed_file_path_str;
+        fs::path packed_file_path = packed_file_path_str;
+        if(!fs::exists(packed_file_path) || !fs::is_regular_file(packed_file_path) || packed_file_path.extension() != ".tp") {
+            std::cout << "Packed file does not exist or it's wrong type of file\n";
+            return 0;
+        }
+        std::cout << "Enter destination path: ";
+        std::string destination_path_str;
+        std::cin >> destination_path_str;
+        fs::path destination_path = destination_path_str;
+        unpack_folder(packed_file_path, destination_path);
+    }else {
+        std::cout << "Invalid choice\n";
     }
-    std::vector<uint8_t> originalData(testString.begin(), testString.end());
-    
-    HuffmanEncoder encoder(originalData);
-    std::vector<uint8_t> compressed = encoder.compress();
-
-    std::cout << "orginal: " << originalData.size() << " compressed: " << compressed.size() << "\n";
-
-    HuffmanDecoder decoder(compressed);
-    std::vector<uint8_t> decompressed = decoder.decompress();
-    
-    std::string resultString(decompressed.begin(), decompressed.end());
-
-    if (testString == resultString) {
-        std::cout << "OK \n";
-    } else {
-        std::cout << "WRONG \n";
-    }
-
-    return 0;
 }
